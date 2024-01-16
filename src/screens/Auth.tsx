@@ -29,7 +29,6 @@ export default function Auth() {
             email: email,
             password: password,
         })
-
         if (error) Alert.alert(error.message)
         if (!session) Alert.alert('Please check your inbox for email verification!')
         setLoading(false)
