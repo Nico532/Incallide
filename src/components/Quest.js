@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 
 const Quest = ({ energy, type, level }) => {
 
-    const fetchData = async () => {
+    /*const fetchData = async () => {
         const { data, error } = await supabase
             .from('player_resources')
             .update({ energy: energy - (8 + 2 * level) })
@@ -13,12 +13,17 @@ const Quest = ({ energy, type, level }) => {
             .select()
         console.log(data)
         if (error) Alert.alert(error.message)
+    }*/
+
+    const fetchData2 = async () => {
+        const { data, error } = await supabase.rpc('do_quest', { type: "strength" });
+        if (error) Alert.alert(error.message)
     }
 
     return (
         <View style={styles.container}>
             <Text>{type} Gem</Text>
-            <Button title={8 + 2 * level + "E"} onPress={fetchData}></Button>
+            <Button title={8 + 2 * level + "E"} onPress={fetchData2}></Button>
         </View>
     )
 }

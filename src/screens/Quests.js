@@ -20,7 +20,6 @@ const Quests = () => {
         if (error) Alert.alert(error.message)
     }
 
-
     return (
         <View style={styles.container}>
             <Text>{energy}</Text>
