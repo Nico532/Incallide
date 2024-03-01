@@ -7,16 +7,11 @@ import Battle from '../screens/Battle';
 const Tab = createBottomTabNavigator();
 
 const AppNavigator = ({ session }) => {
-    const energy = "1" + " Energy"
-    // Subscribe to player_resources db changes
-
-
-
     return (
         <Tab.Navigator>
             <Tab.Screen name="Home" component={Home}></Tab.Screen>
             <Tab.Screen name="Quests" children={() => <Quests session={session}></Quests>}></Tab.Screen>
-            <Tab.Screen name="Battle" component={Battle}></Tab.Screen>
+            <Tab.Screen name="Battle" options={{ headerShown: false }} component={Battle}></Tab.Screen>
         </Tab.Navigator>
     )
 }
