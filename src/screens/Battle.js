@@ -2,12 +2,42 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import ActionButton from '../components/ActionButton'
 import { Ionicons } from '@expo/vector-icons'
+import { supabase } from '../lib/supabase'
+import { useEffect, useState } from 'react'
 
 const Battle = () => {
+
+    const [playerStats, setPlayerStats] = useState(null);
+    const [enemyStats, setEnemyStats] = useState(null);
+
+    const fetchPlayerStats = async () => {
+        const { data, error } = await supabase
+            .from('player_resources')
+            .select('health,damage,armor');
+        setPlayerStats(data[0]);
+        if (error) Alert.alert(error.message);
+    }
+    const initRandomEnemy = () => {
+        setEnemyStats({
+            "armor": Math.floor(4 + Math.random() * 3),
+            "damage": Math.floor(8 + Math.random() * 5),
+            "health": Math.floor(40 + Math.random() * 21),
+        })
+    }
+
+    useEffect(() => {
+        console.log(playerStats)
+        console.log(enemyStats)
+    }, [enemyStats])
+
     return (
         <View style={styles.container}>
             <View style={styles.headerbox}>
                 <Text style={{ fontSize: 20 }}>Round 0/20</Text>
+                <ActionButton onPress={() => {
+                    fetchPlayerStats()
+                    initRandomEnemy()
+                }} action={"Start Battle"}></ActionButton>
             </View>
             <View style={styles.battlebox}>
                 <View style={styles.playerbox}>
@@ -46,7 +76,10 @@ const styles = StyleSheet.create({
     },
     headerbox: {
         flex: 0.4,
-        justifyContent: "center",
+        width: "100%",
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+        alignItems: "center",
     },
     battlebox: {
         flex: 1.8,
