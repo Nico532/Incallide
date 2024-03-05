@@ -11,7 +11,7 @@ const AppNavigator = ({ session }) => {
         <Tab.Navigator>
             <Tab.Screen name="Home" component={Home}></Tab.Screen>
             <Tab.Screen name="Quests" children={() => <Quests session={session}></Quests>}></Tab.Screen>
-            <Tab.Screen name="Battle" options={{ headerShown: false }} component={Battle}></Tab.Screen>
+            <Tab.Screen name="Battle" component={Battle}></Tab.Screen>
         </Tab.Navigator>
     )
 }
