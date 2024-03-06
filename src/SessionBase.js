@@ -7,7 +7,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from '../src/lib/supabase';
 import { useEffect, useState } from 'react';
 import { useRecoilState } from 'recoil';
-import { recoilEnergy } from '../src/state/PlayerResources';
+import { recoilEnergy, recoilStamina } from '../src/state/PlayerResources';
 import { RecoilRoot } from 'recoil';
 
 export default function SessionBase() {
@@ -16,12 +16,16 @@ export default function SessionBase() {
         console.log(uid)
         supabase
             .channel('player_resources')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'player_resources' }, (payload) => { setEnergy(payload.new.energy); })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'player_resources' }, (payload) => {
+                setEnergy(payload.new.energy);
+                setStamina(payload.new.stamina);
+            })
             .subscribe()
     }
 
     const [session, setSession] = useState(null)
     const [energy, setEnergy] = useRecoilState(recoilEnergy)
+    const [stamina, setStamina] = useRecoilState(recoilStamina)
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -33,7 +37,7 @@ export default function SessionBase() {
         })
     }, [])
 
-    console.log(session)
+    //console.log(session)
     realtime(session?.user.id)
 
     return (

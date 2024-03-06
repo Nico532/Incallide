@@ -1,22 +1,20 @@
 import React, { useEffect } from 'react'
+import { View, Text, Button, StyleSheet } from 'react-native'
+import { recoilStamina } from '../state/PlayerResources'
 import { useRecoilState } from 'recoil'
-import { recoilEnergy } from '../state/PlayerResources'
-import { StyleSheet, View, Text, Button, Alert } from 'react-native'
 import Quest from '../components/Quest'
 import { supabase } from '../lib/supabase'
+import TravelArea from '../components/TravelArea'
 
-
-
-const Quests = () => {
-
-    const [energy, setEnergy] = useRecoilState(recoilEnergy);
+const Travel = () => {
+    const [stamina, setStamina] = useRecoilState(recoilStamina);
 
     const fetchData = async () => {
         const { data, error } = await supabase
             .from('player_resources')
-            .select('energy')
+            .select('stamina')
         console.log(data)
-        setEnergy(data[0].energy)
+        setStamina(data[0].stamina)
         if (error) Alert.alert(error.message)
     }
 
@@ -26,9 +24,9 @@ const Quests = () => {
 
     return (
         <View style={styles.container}>
-            <Text>{energy}</Text>
+            <Text>{stamina}</Text>
             <Button title="fetch" onPress={fetchData}></Button>
-            <Quest type={"Strength"} level={1} energy={energy}></Quest>
+            <TravelArea></TravelArea>
         </View>
     )
 }
@@ -38,4 +36,4 @@ const styles = StyleSheet.create({
         alignItems: "center",
     }
 })
-export default Quests
+export default Travel
