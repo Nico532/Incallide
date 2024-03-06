@@ -4,8 +4,7 @@ import ActionButton from '../components/ActionButton'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState, useRef } from 'react'
-import LogComponent from '../components/LogComponent'
-import { ScrollView } from 'react-native'
+import LogBox from '../components/LogBox'
 
 const AttackType = {
     Up: 'Up',
@@ -71,7 +70,7 @@ const Battle = () => {
         var enemyAttackModifier = 1;
         const enemyAttackType = attackTypes[Math.floor(Math.random() * 3)];
         if (playerAttackType === enemyAttackType) {
-
+            // do nothing
         } else if (
             (playerAttackType === "Up" && enemyAttackType === "Left") ||
             (playerAttackType === "Left" && enemyAttackType === "Right") ||
@@ -83,21 +82,21 @@ const Battle = () => {
             playerAttackModifier = 0.5;
             enemyAttackModifier = 1.5;
         }
-        let enemyDmgTaken = playerStats.damage * playerAttackModifier
+
+        // Player 
         let playerDmgTaken = enemyStats.damage * enemyAttackModifier
-
-        setEnemyLog(prevEnemyLog => prevEnemyLog + "Enemy used " + enemyAttackType + "\n-" + enemyDmgTaken + "\n");
-
         setPlayerLog(prevPlayerLog => prevPlayerLog + "Player used " + playerAttackType + "\n-" + playerDmgTaken + "\n");
-
-        setEnemyStats(prevEnemyStats => ({
-            ...prevEnemyStats,
-            health: enemyStats.health - enemyDmgTaken
-        }));
-
         setPlayerStats(prevPlayerStats => ({
             ...prevPlayerStats,
             health: playerStats.health - playerDmgTaken
+        }));
+
+        // Enemy
+        let enemyDmgTaken = playerStats.damage * playerAttackModifier
+        setEnemyLog(prevEnemyLog => prevEnemyLog + "Enemy used " + enemyAttackType + "\n-" + enemyDmgTaken + "\n");
+        setEnemyStats(prevEnemyStats => ({
+            ...prevEnemyStats,
+            health: enemyStats.health - enemyDmgTaken
         }));
 
     }
@@ -107,7 +106,6 @@ const Battle = () => {
         scrollViewRef.current.scrollToEnd()
         if (playerStats.health <= 0) {
             setFightDone(true)
-            Alert.alert("Enemy won")
         }
     }, [playerStats])
 
@@ -116,9 +114,18 @@ const Battle = () => {
         scrollViewRef.current.scrollToEnd()
         if (enemyStats.health <= 0) {
             setFightDone(true);
-            Alert.alert("Player won")
         }
     }, [enemyStats])
+
+    useEffect(() => {
+        if (fightDone) {
+            if (enemyStats.health <= 0) {
+                Alert.alert("Player won!")
+            } else {
+                Alert.alert("Enemy won!")
+            }
+        }
+    }, [fightDone])
 
     useEffect(() => {
         fetchPlayerStats()
@@ -155,19 +162,7 @@ const Battle = () => {
                     <ActionButton disabled={true} onPress={() => calculateRound(AttackType.Down)} action={"Down"}></ActionButton>
                 </View>
             </View>
-            <View style={styles.logbox}>
-                <ScrollView ref={scrollViewRef} style={{ flex: 1, width: "100%" }}>
-                    <View style={{ flex: 1, flexDirection: "row", width: "100%" }}>
-                        <View style={{ flex: 1, alignItems: "center" }}>
-                            <LogComponent text={playerLog} textColor={"darkred"}></LogComponent>
-                        </View>
-                        <View style={{ width: 1, backgroundColor: "black" }}></View>
-                        <View style={{ flex: 1 }}>
-                            <LogComponent text={enemyLog} textColor={"green"}></LogComponent>
-                        </View>
-                    </View>
-                </ScrollView>
-            </View>
+            <LogBox scrollViewRef={scrollViewRef} playerLog={playerLog} enemyLog={enemyLog}></LogBox>
         </View>
     )
 }
@@ -201,16 +196,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-evenly',
         alignItems: 'center',
-    },
-    logbox: {
-        flex: 0.5,
-        flexDirection: "row",
-        width: "95%",
-        height: "100%",
-        margin: 10,
-        padding: 5,
-        backgroundColor: "grey",
-        borderRadius: 10,
     },
     playerbox: {
         flex: 1,
