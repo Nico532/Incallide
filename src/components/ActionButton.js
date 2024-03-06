@@ -1,9 +1,12 @@
 import React from 'react'
 import { TouchableOpacity, StyleSheet, Text } from 'react-native'
 
-const ActionButton = ({ action }) => {
+const ActionButton = ({ action, onPress, disabled }) => {
     return (
-        <TouchableOpacity style={styles.container}>
+        <TouchableOpacity disabled={disabled} onPress={onPress} style={{
+            ...styles.container,
+            backgroundColor: disabled ? "lightgrey" : "white",
+        }}>
             <Text>{action}</Text>
         </TouchableOpacity>
     )

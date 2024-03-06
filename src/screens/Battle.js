@@ -1,40 +1,168 @@
 import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, Alert } from 'react-native'
 import ActionButton from '../components/ActionButton'
 import { Ionicons } from '@expo/vector-icons'
+import { supabase } from '../lib/supabase'
+import { useEffect, useState, useRef } from 'react'
+import LogBox from '../components/LogBox'
+
+const AttackType = {
+    Up: 'Up',
+    Down: 'Down',
+    Left: 'Left',
+    Right: 'Right'
+};
 
 const Battle = () => {
+
+    const scrollViewRef = useRef()
+    const [playerStats, setPlayerStats] = useState({
+        "armor": Math.floor(4 + Math.random() * 3),
+        "damage": Math.floor(8 + Math.random() * 5),
+        "health": Math.floor(40 + Math.random() * 21),
+    });
+    const [enemyStats, setEnemyStats] = useState({
+        "armor": Math.floor(4 + Math.random() * 3),
+        "damage": Math.floor(8 + Math.random() * 5),
+        "health": Math.floor(40 + Math.random() * 21),
+    });
+    const [playerLoading, setPlayerLoading] = useState(true);
+    const [enemyLoading, setEnemyLoading] = useState(true);
+    const [playerLog, setPlayerLog] = useState("");
+    const [enemyLog, setEnemyLog] = useState("");
+    const [round, setRound] = useState(1);
+    const [fightDone, setFightDone] = useState(false);
+
+    const fetchPlayerStats = async () => {
+        setPlayerLoading(true)
+        const { data, error } = await supabase
+            .from('player_resources')
+            .select('health,damage,armor');
+        setPlayerStats(data[0]);
+        if (error) Alert.alert(error.message);
+    }
+    const initRandomEnemy = () => {
+        setEnemyLoading(true)
+        setEnemyStats({
+            "armor": Math.floor(4 + Math.random() * 3),
+            "damage": Math.floor(8 + Math.random() * 5),
+            "health": Math.floor(40 + Math.random() * 21),
+        })
+    }
+
+    const startBattle = () => {
+        fetchPlayerStats()
+        initRandomEnemy()
+        setPlayerLog("")
+        setEnemyLog("")
+        setRound(0)
+        setFightDone(false)
+    }
+
+    const newRound = () => {
+        setRound(round + 1)
+    }
+
+    const calculateRound = (playerAttackType) => {
+        newRound();
+        const attackTypes = ["Up", "Left", "Right", "Down"]
+        var playerAttackModifier = 1;
+        var enemyAttackModifier = 1;
+        const enemyAttackType = attackTypes[Math.floor(Math.random() * 3)];
+        if (playerAttackType === enemyAttackType) {
+            // do nothing
+        } else if (
+            (playerAttackType === "Up" && enemyAttackType === "Left") ||
+            (playerAttackType === "Left" && enemyAttackType === "Right") ||
+            (playerAttackType === "Right" && enemyAttackType === "Up")
+        ) {
+            playerAttackModifier = 1.5;
+            enemyAttackModifier = 0.5;
+        } else {
+            playerAttackModifier = 0.5;
+            enemyAttackModifier = 1.5;
+        }
+
+        // Player 
+        let playerDmgTaken = enemyStats.damage * enemyAttackModifier
+        setPlayerLog(prevPlayerLog => prevPlayerLog + "Player used " + playerAttackType + "\n-" + playerDmgTaken + "\n");
+        setPlayerStats(prevPlayerStats => ({
+            ...prevPlayerStats,
+            health: playerStats.health - playerDmgTaken
+        }));
+
+        // Enemy
+        let enemyDmgTaken = playerStats.damage * playerAttackModifier
+        setEnemyLog(prevEnemyLog => prevEnemyLog + "Enemy used " + enemyAttackType + "\n-" + enemyDmgTaken + "\n");
+        setEnemyStats(prevEnemyStats => ({
+            ...prevEnemyStats,
+            health: enemyStats.health - enemyDmgTaken
+        }));
+
+    }
+
+    useEffect(() => {
+        setPlayerLoading(false)
+        scrollViewRef.current.scrollToEnd()
+        if (playerStats.health <= 0) {
+            setFightDone(true)
+        }
+    }, [playerStats])
+
+    useEffect(() => {
+        setEnemyLoading(false)
+        scrollViewRef.current.scrollToEnd()
+        if (enemyStats.health <= 0) {
+            setFightDone(true);
+        }
+    }, [enemyStats])
+
+    useEffect(() => {
+        if (fightDone) {
+            if (enemyStats.health <= 0) {
+                Alert.alert("Player won!")
+            } else {
+                Alert.alert("Enemy won!")
+            }
+        }
+    }, [fightDone])
+
+    useEffect(() => {
+        fetchPlayerStats()
+    }, [])
+
     return (
         <View style={styles.container}>
             <View style={styles.headerbox}>
-                <Text style={{ fontSize: 20 }}>Round 0/20</Text>
+                <Text style={{ fontSize: 20 }}>{"Round " + round + "/20"}</Text>
+                <ActionButton onPress={startBattle} action={"Start Battle"}></ActionButton>
             </View>
             <View style={styles.battlebox}>
                 <View style={styles.playerbox}>
-                    <Text>Player 1</Text>
+                    {!playerLoading && <Text>{playerStats["health"]}</Text>}
+                    <Text>Player</Text>
                     <Ionicons name="person" size={24} color="black" />
                 </View>
                 <View style={styles.playerbox}>
-                    <Text>Player 2</Text>
+                    {!enemyLoading && <Text>{enemyStats["health"]}</Text>}
+                    <Text>Enemy</Text>
                     <Ionicons name="person" size={24} color="black" />
                 </View>
             </View>
             <View style={styles.actionbox}>
                 <View style={styles.actionbox_slice}>
-                    <ActionButton action={"Up"}></ActionButton>
+                    <ActionButton disabled={fightDone && true} onPress={() => calculateRound(AttackType.Up)} action={"Up"}></ActionButton>
                 </View>
                 <View style={styles.actionbox_slice}>
-                    <ActionButton action={"Left"}></ActionButton>
-                    <ActionButton action={"Right"}></ActionButton>
+                    <ActionButton disabled={fightDone && true} onPress={() => calculateRound(AttackType.Left)} action={"Left"}></ActionButton>
+                    <ActionButton disabled={fightDone && true} onPress={() => calculateRound(AttackType.Right)} action={"Right"}></ActionButton>
                 </View>
 
                 <View style={styles.actionbox_slice}>
-                    <ActionButton action={"Down"}></ActionButton>
+                    <ActionButton disabled={true} onPress={() => calculateRound(AttackType.Down)} action={"Down"}></ActionButton>
                 </View>
             </View>
-            <View style={styles.logbox}>
-                <Text>Test</Text>
-            </View>
+            <LogBox scrollViewRef={scrollViewRef} playerLog={playerLog} enemyLog={enemyLog}></LogBox>
         </View>
     )
 }
@@ -46,7 +174,10 @@ const styles = StyleSheet.create({
     },
     headerbox: {
         flex: 0.4,
-        justifyContent: "center",
+        width: "100%",
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+        alignItems: "center",
     },
     battlebox: {
         flex: 1.8,
@@ -65,14 +196,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-evenly',
         alignItems: 'center',
-    },
-    logbox: {
-        flex: 0.5,
-        width: "95%",
-        margin: 10,
-        padding: 10,
-        backgroundColor: "grey",
-        borderRadius: 10,
     },
     playerbox: {
         flex: 1,
