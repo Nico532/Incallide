@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { View, Text, Button, StyleSheet } from 'react-native'
+import { View, Text, Button, StyleSheet, Alert } from 'react-native'
 import { recoilStamina } from '../state/PlayerResources'
 import { useRecoilState } from 'recoil'
 import Quest from '../components/Quest'
