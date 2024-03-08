@@ -10,3 +10,8 @@ export const recoilSession = atom({
     key: 'session',
     default: null,
 })
+
+export const recoilStamina = atom({
+    key: 'stamina',
+    default: 0,
+})
