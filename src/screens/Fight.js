@@ -13,19 +13,13 @@ const AttackType = {
     Right: 'Right'
 };
 
-const Fight = () => {
+const Fight = ({ route, navigation }) => {
+
+    const enemyData = route.params[0];
 
     const scrollViewRef = useRef()
-    const [playerStats, setPlayerStats] = useState({
-        "armor": Math.floor(4 + Math.random() * 3),
-        "damage": Math.floor(8 + Math.random() * 5),
-        "health": Math.floor(40 + Math.random() * 21),
-    });
-    const [enemyStats, setEnemyStats] = useState({
-        "armor": Math.floor(4 + Math.random() * 3),
-        "damage": Math.floor(8 + Math.random() * 5),
-        "health": Math.floor(40 + Math.random() * 21),
-    });
+    const [playerStats, setPlayerStats] = useState();
+    const [enemyStats, setEnemyStats] = useState();
     const [playerLoading, setPlayerLoading] = useState(true);
     const [enemyLoading, setEnemyLoading] = useState(true);
     const [playerLog, setPlayerLog] = useState("");
@@ -41,22 +35,30 @@ const Fight = () => {
         setPlayerStats(data[0]);
         if (error) Alert.alert(error.message);
     }
-    const initRandomEnemy = () => {
+    const initEnemy = () => {
         setEnemyLoading(true)
         setEnemyStats({
-            "armor": Math.floor(4 + Math.random() * 3),
-            "damage": Math.floor(8 + Math.random() * 5),
-            "health": Math.floor(40 + Math.random() * 21),
+            "armor": enemyData.monster.std_armor + Math.floor(enemyData.monster.std_armor * enemyData.level / 10),
+            "damage": enemyData.monster.std_damage + Math.floor(enemyData.monster.std_damage * enemyData.level / 10),
+            "health": enemyData.monster.std_health + Math.floor(enemyData.monster.std_health * enemyData.level / 10),
         })
     }
 
-    const startBattle = () => {
-        fetchPlayerStats()
-        initRandomEnemy()
-        setPlayerLog("")
-        setEnemyLog("")
-        setRound(0)
-        setFightDone(false)
+    const startFight = () => {
+        fetchPlayerStats();
+        initEnemy();
+        setPlayerLog("");
+        setEnemyLog("");
+        setRound(0);
+        setFightDone(false);
+    }
+
+    const endFight = async () => {
+        const { data, error } = await supabase.rpc("end_fight", { tsid: enemyData.created_at });
+        if (data.code === -1) Alert.alert("Not in a battle with this monster...")
+        if (data.code === 1) Alert.alert("Player won " + data.rewards + " Gold, " + data.rewards + " Exp")
+        if (error) console.log(error);
+        //navigation.navigate("Battle");
     }
 
     const newRound = () => {
@@ -104,7 +106,7 @@ const Fight = () => {
     useEffect(() => {
         setPlayerLoading(false)
         scrollViewRef.current.scrollToEnd()
-        if (playerStats.health <= 0) {
+        if (playerStats?.health <= 0) {
             setFightDone(true)
         }
     }, [playerStats])
@@ -112,30 +114,27 @@ const Fight = () => {
     useEffect(() => {
         setEnemyLoading(false)
         scrollViewRef.current.scrollToEnd()
-        if (enemyStats.health <= 0) {
+        if (enemyStats?.health <= 0) {
             setFightDone(true);
         }
+        console.log(enemyStats);
     }, [enemyStats])
 
     useEffect(() => {
         if (fightDone) {
-            if (enemyStats.health <= 0) {
-                Alert.alert("Player won!")
-            } else {
-                Alert.alert("Enemy won!")
-            }
+            endFight();
         }
     }, [fightDone])
 
     useEffect(() => {
-        fetchPlayerStats()
+        startFight();
     }, [])
 
     return (
         <View style={styles.container}>
             <View style={styles.headerbox}>
                 <Text style={{ fontSize: 20 }}>{"Round " + round + "/20"}</Text>
-                <ActionButton onPress={startBattle} action={"Start Battle"}></ActionButton>
+                <ActionButton onPress={startFight} action={"Start Battle"}></ActionButton>
             </View>
             <View style={styles.battlebox}>
                 <View style={styles.playerbox}>
@@ -145,7 +144,7 @@ const Fight = () => {
                 </View>
                 <View style={styles.playerbox}>
                     {!enemyLoading && <Text>{enemyStats["health"]}</Text>}
-                    <Text>Enemy</Text>
+                    <Text>{enemyData.monster.name}</Text>
                     <Ionicons name="person" size={24} color="black" />
                 </View>
             </View>
